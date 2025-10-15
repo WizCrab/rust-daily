@@ -1,3 +1,26 @@
+//! Public Registry API
+//!
+//! Implements read only access for all internal `Tablet`s.
+//!
+//! [`Tablet`] - Single title
+//! [`Shard`] - Single note from `Tablet`
+//! [`Registry`] - Collection of all `Tablet`s and `Shard`s available
+//! [`Transcriptor`] - Special tool for reading `Tablet`s and `Shard`s in `markdown` format
+//!
+//! # Examples
+//!
+//! ```
+//! use rust_daily::{Registry, Transcriptor, Tablet};
+//!
+//! let first_tablet = Registry::catalog().into_iter().next().unwrap();
+//! let tablet_shard = first_tablet.shards().next().unwrap();
+//!
+//! let first_shard = Registry::heap().into_iter().next().unwrap();
+//! assert_eq!(tablet_shard, first_shard);
+//!
+//! let shard_markdown_string = Transcriptor::read(&tablet_shard);
+//! ```
+
 use std::fs::File;
 use std::io::{BufRead, BufReader, Result};
 use std::path::Path;
@@ -8,22 +31,73 @@ mod registry;
 const TABLET_UNREADABLE_MSG: &str = "The tablet is expected to be readable!";
 const TABLET_BROKEN_NAME_MSG: &str = "The tablet is expected to have a valid name!";
 
+/// `Tablet` represents a single title. Contains only path to the title file, start and end lines, and methods representing common info
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Tablet(&'static str, (usize, usize));
+/// `Shard` is logically different from the [`Tablet`], but actually is just an alias. Represents one note from the [`Tablet`]
+pub type Shard = Tablet;
+
+impl Tablet {
+    /// returns path to the note as `&str`
+    pub fn path_str(&self) -> &'static str {
+        self.0
+    }
+
+    /// which line to start reading from
+    pub fn start(&self) -> usize {
+        self.1.0
+    }
+
+    /// which line to stop reading on
+    pub fn end(&self) -> usize {
+        self.1.1
+    }
+
+    /// returns path to the note as &[`Path`]
+    pub fn path(&self) -> &'static Path {
+        Path::new(self.path_str())
+    }
+
+    /// count of lines in the note
+    pub fn length(&self) -> usize {
+        self.end() - self.start() + 1
+    }
+
+    /// name of the note. Originates from the filename
+    pub fn name(&self) -> &'static str {
+        self.path()
+            .file_stem()
+            .expect(TABLET_BROKEN_NAME_MSG)
+            .to_str()
+            .expect(TABLET_BROKEN_NAME_MSG)
+    }
+
+    /// returns [`Shards`] iterator over every [`Shard`] in this title
+    pub fn shards(&self) -> Shards {
+        self.into()
+    }
+}
+
+/// `Transcriptor` represents a special tool for reading [`Tablet`]s and [`Shard`]s in the `markdown` format
 pub struct Transcriptor;
 
 impl Transcriptor {
     const SEPARATOR: &str = "-----";
 
+    // formats one line to match `markdown` format
     fn line_fmt(line: &str) -> String {
         let mut formatted = String::new();
         formatted.push_str(
             line.replace("//!", "")
                 .replace("```should_panic", "```rust")
+                .replace("```no_run", "```rust")
                 .trim(),
         );
         formatted.push('\n');
         formatted
     }
 
+    // finds all separators in the `Tablet`
     fn segmentation(tablet: &Tablet) -> Result<Vec<(usize, usize)>> {
         let mut segments: Vec<(usize, usize)> = Vec::new();
         let mut ptr: usize = tablet.start();
@@ -43,6 +117,7 @@ impl Transcriptor {
         Ok(segments)
     }
 
+    /// reads the contents of [`Tablet`] or [`Shard`], formats it to match the `markdown` format, and returns as [`String`]
     pub fn read(tablet: &Tablet) -> Result<String> {
         let mut contents = String::new();
         let data = File::open(tablet.path())?;
@@ -58,44 +133,7 @@ impl Transcriptor {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Tablet(&'static str, (usize, usize));
-pub type Shard = Tablet;
-
-impl Tablet {
-    pub fn path_str(&self) -> &'static str {
-        self.0
-    }
-
-    pub fn start(&self) -> usize {
-        self.1.0
-    }
-
-    pub fn end(&self) -> usize {
-        self.1.1
-    }
-
-    pub fn path(&self) -> &'static Path {
-        Path::new(self.path_str())
-    }
-
-    pub fn length(&self) -> usize {
-        self.end() - self.start() + 1
-    }
-
-    pub fn name(&self) -> &'static str {
-        self.path()
-            .file_stem()
-            .expect(TABLET_BROKEN_NAME_MSG)
-            .to_str()
-            .expect(TABLET_BROKEN_NAME_MSG)
-    }
-
-    pub fn shards(&self) -> Shards {
-        self.into()
-    }
-}
-
+/// `Shards` is an iterator over every [`Shard`] from the [`Tablet`]
 #[derive(Debug, Clone)]
 pub struct Shards {
     origin: Tablet,
@@ -126,6 +164,7 @@ impl From<&Tablet> for Shards {
     }
 }
 
+/// `Registry` represents a collection of all [`Tablet`]s and [`Shard`]s available
 pub struct Registry;
 
 impl Registry {
@@ -135,6 +174,7 @@ impl Registry {
         Tablet(path, (0, length - 1))
     }
 
+    /// returns all available [`Tablet`]s in the form of [`Vec`]. Use [`Transcriptor`] to read from the [`Tablet`]
     pub fn catalog() -> Vec<Tablet> {
         registry::TABLETS
             .iter()
@@ -142,6 +182,7 @@ impl Registry {
             .collect()
     }
 
+    /// returns all available [`Shard`]s in the form of [`Vec`]. Use [`Transcriptor`] to read from the [`Shard`]
     pub fn heap() -> Vec<Shard> {
         Self::catalog()
             .iter()

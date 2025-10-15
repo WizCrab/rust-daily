@@ -7,10 +7,14 @@
 
 pub(crate) mod strings;
 pub(crate) mod ownership;
+pub(crate) mod borrow_checker;
+pub(crate) mod sized;
 
 
 /// Special array containing all `note`s full paths
-pub(crate) const TABLETS: [&str; 2] = [
+pub(crate) const TABLETS: [&str; 4] = [
 	concat!(env!("CARGO_MANIFEST_DIR"), "/src/registry/strings.rs"),
 	concat!(env!("CARGO_MANIFEST_DIR"), "/src/registry/ownership.rs"),
+	concat!(env!("CARGO_MANIFEST_DIR"), "/src/registry/borrow_checker.rs"),
+	concat!(env!("CARGO_MANIFEST_DIR"), "/src/registry/sized.rs"),
 ];
