@@ -1,7 +1,7 @@
 //! # Sized Trait
 //!
 //! Every Programming Language has to somehow approach the problem of data types whose size is unknown at compile time,
-//! known as dynamically sized types, DTFs, or Unsized.
+//! known as dynamically sized types, DSTs, or Unsized.
 //!
 //! Rust has [`Sized`] trait, which is a part of the solution to this problem.
 //! Understanding how the [`Sized`] trait and consequential `trait bounds` work is essential for dealing with
