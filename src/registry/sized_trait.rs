@@ -56,7 +56,7 @@
 //! let boxed_arr: Box<[i32]> = Box::new([1, 2, 3]);
 //! ```
 //!
-//! But it is important to remember about [`lifetimes`] rules when working with `Unsized` types.
+//! But it is important to remember about `lifetimes` rules when working with `Unsized` types.
 //!
 //! Those references are stored in the stack, and have fixed known sizes, but the actual data may be located on the stack (like simple arrays),
 //! or in the heap (like Box or Vec or String), or even in the code (text) section of the memory (like string literals).

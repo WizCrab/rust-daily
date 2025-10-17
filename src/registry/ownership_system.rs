@@ -20,10 +20,6 @@
 //! - There can only be one owner at a time
 //! - When the owner goes out of scope, the value will be dropped
 //!
-//! ---------------------------------------------------------------------------------------------------
-//!
-//! # Ownership System In Action
-//!
 //! ```rust
 //! let s = String::from(":D"); // `s` owns string data stored at the heap
 //! // `move` operation:
@@ -63,7 +59,7 @@
 //!
 //! ---------------------------------------------------------------------------------------------------
 //!
-//! # Non-Obvious Ownership Interactions
+//! # Hidden Ownership Interactions
 //!
 //! When using `for` instruction for example to iterate over every element in a collection,
 //! rust implicitly calles `into_iter` method on that collection, and this method takes the ownership:

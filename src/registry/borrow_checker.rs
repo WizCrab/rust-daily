@@ -41,7 +41,7 @@
 //! ```
 //!
 //! This code won't even compile, because we need to specify a `lifetime` of the returned &[`String`],
-//! and this [`lifetimes`] concept prevents dangling references from existence
+//! and this `lifetimes` concept prevents dangling references from existence
 //!
 //! ---------------------------------------------------------------------------------------------------
 //!
